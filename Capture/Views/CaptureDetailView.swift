@@ -5,16 +5,18 @@ import UIKit
 struct CaptureDetailView: View {
     let capture: Capture
     @Environment(\.modelContext) private var modelContext
-    @Query private var allEnrichments: [Enrichment]
+    @Query private var enrichments: [Enrichment]
     @State private var correctedPeopleText = ""
     @State private var correctedAreasText = ""
 
     init(capture: Capture) {
         self.capture = capture
+        let id = capture.id
+        _enrichments = Query(filter: #Predicate<Enrichment> { $0.captureId == id }, sort: [])
     }
 
     private var enrichment: Enrichment? {
-        allEnrichments.first(where: { $0.captureId == capture.id })
+        enrichments.first
     }
 
     private var displayedPeople: [String] {
@@ -144,9 +146,9 @@ private struct FlowLayout: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(chunked(values, size: 3), id: \.self) { row in
+            ForEach(Array(chunked(values, size: 3).enumerated()), id: \.offset) { _, row in
                 HStack {
-                    ForEach(row, id: \.self) { value in
+                    ForEach(Array(row.enumerated()), id: \.offset) { _, value in
                         StatusChip(title: value, tint: tint)
                     }
                     Spacer(minLength: 0)

@@ -10,10 +10,12 @@ final class AudioRecorder: NSObject, ObservableObject {
 
     func startRecording() async {
         guard !isRecording else { return }
+        isRecording = true
         do {
             let allowed = await requestPermission()
             guard allowed else {
                 errorMessage = "Microphone permission was denied."
+                isRecording = false
                 return
             }
 
@@ -33,8 +35,8 @@ final class AudioRecorder: NSObject, ObservableObject {
             recorder?.prepareToRecord()
             recorder?.record()
             errorMessage = nil
-            isRecording = true
         } catch {
+            isRecording = false
             errorMessage = error.localizedDescription
         }
     }

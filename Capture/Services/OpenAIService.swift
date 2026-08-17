@@ -34,6 +34,8 @@ actor OpenAIService {
             throw ServiceError.missingAPIKey
         }
 
+        let fileData = try Data(contentsOf: fileURL)
+
         var request = URLRequest(url: baseURL.appending(path: "audio/transcriptions"))
         request.httpMethod = "POST"
         let boundary = "Boundary-\(UUID().uuidString)"
@@ -42,7 +44,7 @@ actor OpenAIService {
 
         var body = Data()
         body.appendMultipartField(named: "model", value: "whisper-1", boundary: boundary)
-        body.appendMultipartFile(named: "file", fileURL: fileURL, mimeType: "audio/m4a", boundary: boundary)
+        body.appendMultipartFile(named: "file", fileData: fileData, filename: fileURL.lastPathComponent, mimeType: "audio/m4a", boundary: boundary)
         body.appendString("--\(boundary)--\r\n")
         request.httpBody = body
 
@@ -151,11 +153,11 @@ private extension Data {
         appendString("\r\n")
     }
 
-    mutating func appendMultipartFile(named name: String, fileURL: URL, mimeType: String, boundary: String) {
+    mutating func appendMultipartFile(named name: String, fileData: Data, filename: String, mimeType: String, boundary: String) {
         appendString("--\(boundary)\r\n")
-        appendString("Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(fileURL.lastPathComponent)\"\r\n")
+        appendString("Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n")
         appendString("Content-Type: \(mimeType)\r\n\r\n")
-        append((try? Data(contentsOf: fileURL)) ?? Data())
+        append(fileData)
         appendString("\r\n")
     }
 }

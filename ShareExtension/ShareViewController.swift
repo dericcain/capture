@@ -70,14 +70,18 @@ final class ShareViewController: UIViewController {
     }
 
     private func saveCapture(source: CaptureSource, rawText: String, attachment: Attachment?) throws {
-        let context = ModelContext(PersistenceService.sharedModelContainer)
+        let schema = Schema([Capture.self, Enrichment.self, Attachment.self])
+        let storeURL = FileManager.default
+            .containerURL(forSecurityApplicationGroupIdentifier: PersistenceService.appGroupIdentifier)?
+            .appending(path: "capture.store")
+            ?? URL.documentsDirectory.appending(path: "capture.store")
+        let config = ModelConfiguration(schema: schema, url: storeURL)
+        let container = try ModelContainer(for: schema, configurations: [config])
+        let context = ModelContext(container)
         let capture = Capture(source: source, rawText: rawText, attachments: attachment.map { [$0] } ?? [])
         attachment?.captureId = capture.id
         context.insert(capture)
         try context.save()
-        Task {
-            await BackgroundProcessor.shared.enqueueProcessing(for: capture.id)
-        }
     }
 
     private func loadURL(from provider: NSItemProvider) async throws -> URL {

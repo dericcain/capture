@@ -87,11 +87,15 @@ actor BackgroundProcessor {
     }
 
     private func fetchCapture(id: UUID, in context: ModelContext) throws -> Capture? {
-        try context.fetch(FetchDescriptor<Capture>()).first(where: { $0.id == id })
+        var descriptor = FetchDescriptor<Capture>(predicate: #Predicate { $0.id == id })
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first
     }
 
     private func fetchEnrichment(captureID: UUID, in context: ModelContext) throws -> Enrichment? {
-        try context.fetch(FetchDescriptor<Enrichment>()).first(where: { $0.captureId == captureID })
+        var descriptor = FetchDescriptor<Enrichment>(predicate: #Predicate { $0.captureId == captureID })
+        descriptor.fetchLimit = 1
+        return try context.fetch(descriptor).first
     }
 
     private func fallbackPromptContent(for capture: Capture) -> String {

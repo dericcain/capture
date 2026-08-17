@@ -2,13 +2,22 @@ import Foundation
 import SwiftData
 
 final class PersistenceService {
+    static let appGroupIdentifier = "group.com.dericcain.capture"
+
     static let sharedModelContainer: ModelContainer = {
         do {
-            return try ModelContainer(for: Capture.self, Enrichment.self, Attachment.self)
+            let schema = Schema([Capture.self, Enrichment.self, Attachment.self])
+            let storeURL = appGroupContainerURL()?.appending(path: "capture.store") ?? URL.documentsDirectory.appending(path: "capture.store")
+            let config = ModelConfiguration(schema: schema, url: storeURL)
+            return try ModelContainer(for: schema, configurations: [config])
         } catch {
             fatalError("Unable to create ModelContainer: \(error.localizedDescription)")
         }
     }()
+
+    static func appGroupContainerURL() -> URL? {
+        FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier)
+    }
 
     static func documentsDirectory(subdirectory: String? = nil) throws -> URL {
         let baseURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
@@ -19,7 +28,17 @@ final class PersistenceService {
     }
 
     static func makeUniqueDocumentURL(filename: String, subdirectory: String) throws -> URL {
-        try documentsDirectory(subdirectory: subdirectory).appending(path: filename)
+        let directory = try documentsDirectory(subdirectory: subdirectory)
+        let base = URL(fileURLWithPath: filename).deletingPathExtension().lastPathComponent
+        let ext = URL(fileURLWithPath: filename).pathExtension
+        var candidate = directory.appending(path: filename)
+        var counter = 1
+        while FileManager.default.fileExists(atPath: candidate.path) {
+            let newFilename = ext.isEmpty ? "\(base)-\(counter)" : "\(base)-\(counter).\(ext)"
+            candidate = directory.appending(path: newFilename)
+            counter += 1
+        }
+        return candidate
     }
 
     static func saveDataToDocuments(_ data: Data, filename: String, subdirectory: String) throws -> URL {
@@ -37,9 +56,6 @@ final class PersistenceService {
         }
 
         let destinationURL = try makeUniqueDocumentURL(filename: sourceURL.lastPathComponent, subdirectory: subdirectory)
-        if FileManager.default.fileExists(atPath: destinationURL.path) {
-            try FileManager.default.removeItem(at: destinationURL)
-        }
         try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
         return destinationURL
     }

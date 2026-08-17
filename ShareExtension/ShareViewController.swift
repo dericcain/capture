@@ -75,13 +75,10 @@ final class ShareViewController: UIViewController {
         attachment?.captureId = capture.id
         context.insert(capture)
         try context.save()
-        Task {
-            await BackgroundProcessor.shared.enqueueProcessing(for: capture.id)
-        }
     }
 
     private func loadURL(from provider: NSItemProvider) async throws -> URL {
-        try await withCheckedThrowingContinuation { continuation in
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<URL, Error>) in
             provider.loadItem(forTypeIdentifier: UTType.url.identifier, options: nil) { item, error in
                 if let error {
                     continuation.resume(throwing: error)
@@ -100,7 +97,7 @@ final class ShareViewController: UIViewController {
         let typeIdentifier = provider.hasItemConformingToTypeIdentifier(UTType.plainText.identifier)
             ? UTType.plainText.identifier
             : UTType.text.identifier
-        try await withCheckedThrowingContinuation { continuation in
+        return try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<String, Error>) in
             provider.loadItem(forTypeIdentifier: typeIdentifier, options: nil) { item, error in
                 if let error {
                     continuation.resume(throwing: error)

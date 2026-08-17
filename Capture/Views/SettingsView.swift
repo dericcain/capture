@@ -3,9 +3,10 @@ import SwiftUI
 
 struct SettingsView: View {
     @Environment(\.modelContext) private var modelContext
-    @AppStorage(OpenAIService.apiKeyDefaultsKey) private var apiKey = ""
+    @AppStorage(OpenAIService.apiKeyDefaultsKey, store: PersistenceService.sharedUserDefaults) private var apiKey = ""
     @State private var clearDataConfirmation = false
     @State private var statusMessage: String?
+    @State private var retryPendingTask: Task<Void, Never>?
 
     private var versionText: String {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
@@ -48,6 +49,17 @@ struct SettingsView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This removes every capture, enrichment, and stored attachment.")
+        }
+        .onChange(of: apiKey) { _, newValue in
+            retryPendingTask?.cancel()
+            let trimmed = newValue.trimmingCharacters(in: .whitespacesAndNewlines)
+            guard trimmed.count >= 20 else { return }
+
+            retryPendingTask = Task {
+                try? await Task.sleep(for: .milliseconds(600))
+                guard !Task.isCancelled else { return }
+                await BackgroundProcessor.shared.retryPendingCaptures()
+            }
         }
     }
 

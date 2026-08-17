@@ -5,11 +5,11 @@ import SwiftData
 final class Enrichment {
     @Attribute(.unique) var captureId: UUID
     var summary: String
-    @Attribute(.transformable) var areas: [String]
-    @Attribute(.transformable) var people: [String]
-    @Attribute(.transformable) var topics: [String]
-    @Attribute(.transformable) var tasks: [String]
-    @Attribute(.transformable) var dates: [String]
+    var areas: [String]
+    var people: [String]
+    var topics: [String]
+    var tasks: [String]
+    var dates: [String]
     var confidence: Double
 
     init(

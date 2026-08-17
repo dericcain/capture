@@ -14,6 +14,7 @@ struct CaptureView: View {
     @State private var showPhotoPicker = false
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var importError: String?
+    @State private var recordingStartRequested = false
 
     private var recentCaptures: [Capture] {
         Array(captures.prefix(5))
@@ -25,9 +26,9 @@ struct CaptureView: View {
                 VStack(spacing: 12) {
                     ZStack {
                         Circle()
-                            .fill(audioRecorder.isRecording ? .red.gradient : .accentColor.gradient)
+                            .fill(audioRecorder.isRecording ? Color.red.gradient : Color.accentColor.gradient)
                             .frame(width: 180, height: 180)
-                            .shadow(color: audioRecorder.isRecording ? .red.opacity(0.35) : .accentColor.opacity(0.25), radius: 16)
+                            .shadow(color: audioRecorder.isRecording ? Color.red.opacity(0.35) : Color.accentColor.opacity(0.25), radius: 16)
 
                         Image(systemName: audioRecorder.isRecording ? "waveform.circle.fill" : "mic.fill")
                             .font(.system(size: 60, weight: .bold))
@@ -166,18 +167,30 @@ struct CaptureView: View {
     private var recordGesture: some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { _ in
-                guard !audioRecorder.isRecording else { return }
-                Task { await audioRecorder.startRecording() }
+                guard !audioRecorder.isRecording, !audioRecorder.isStarting, !recordingStartRequested else { return }
+                recordingStartRequested = true
+                Task {
+                    await audioRecorder.startRecording()
+                    recordingStartRequested = false
+                }
             }
             .onEnded { _ in
-                Task { await finishRecording() }
+                Task {
+                    if !audioRecorder.isRecording {
+                        audioRecorder.cancelPendingRecordingStart()
+                    }
+                    await finishRecording()
+                    recordingStartRequested = false
+                }
             }
     }
 
     @MainActor
     private func finishRecording() async {
         guard let url = audioRecorder.stopRecording() else {
-            importError = audioRecorder.errorMessage ?? "Recording could not be saved."
+            if let errorMessage = audioRecorder.errorMessage {
+                importError = errorMessage
+            }
             return
         }
 

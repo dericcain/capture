@@ -10,8 +10,8 @@ final class Capture {
     @Relationship(deleteRule: .cascade) var attachments: [Attachment]
     var transcriptionStatus: ProcessingStatus
     var enrichmentStatus: ProcessingStatus
-    @Attribute(.transformable) var correctedAreas: [String]
-    @Attribute(.transformable) var correctedPeople: [String]
+    var correctedAreas: [String]
+    var correctedPeople: [String]
     var isImportant: Bool
 
     init(

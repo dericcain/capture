@@ -20,7 +20,7 @@ struct CaptureRowView: View {
         HStack(alignment: .top, spacing: 12) {
             Image(systemName: capture.source.systemImage)
                 .font(.title3)
-                .foregroundStyle(.accent)
+                .foregroundStyle(Color.accentColor)
                 .frame(width: 28)
 
             VStack(alignment: .leading, spacing: 4) {

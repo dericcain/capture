@@ -2,16 +2,38 @@ import Foundation
 import SwiftData
 
 final class PersistenceService {
+    static let appGroupIdentifier = "group.com.capture.shared"
+    static let sharedUserDefaults = UserDefaults(suiteName: appGroupIdentifier) ?? .standard
+
+    private static let sharedStoreFilename = "Capture.store"
+
     static let sharedModelContainer: ModelContainer = {
         do {
-            return try ModelContainer(for: Capture.self, Enrichment.self, Attachment.self)
+            let configuration = ModelConfiguration(
+                url: try sharedStoreURL(),
+                allowsSave: true
+            )
+            return try ModelContainer(for: Capture.self, Enrichment.self, Attachment.self, configurations: configuration)
         } catch {
             fatalError("Unable to create ModelContainer: \(error.localizedDescription)")
         }
     }()
 
+    private static func sharedContainerDirectory() throws -> URL {
+        guard let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroupIdentifier) else {
+            throw CocoaError(.fileNoSuchFile)
+        }
+
+        try FileManager.default.createDirectory(at: containerURL, withIntermediateDirectories: true)
+        return containerURL
+    }
+
+    private static func sharedStoreURL() throws -> URL {
+        try sharedContainerDirectory().appending(path: sharedStoreFilename)
+    }
+
     static func documentsDirectory(subdirectory: String? = nil) throws -> URL {
-        let baseURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first!
+        let baseURL = try sharedContainerDirectory()
         guard let subdirectory else { return baseURL }
         let directory = baseURL.appending(path: subdirectory, directoryHint: .isDirectory)
         try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
@@ -19,7 +41,24 @@ final class PersistenceService {
     }
 
     static func makeUniqueDocumentURL(filename: String, subdirectory: String) throws -> URL {
-        try documentsDirectory(subdirectory: subdirectory).appending(path: filename)
+        let directory = try documentsDirectory(subdirectory: subdirectory)
+        let baseName = URL(fileURLWithPath: filename).deletingPathExtension().lastPathComponent
+        let fileExtension = URL(fileURLWithPath: filename).pathExtension
+        let fileManager = FileManager.default
+
+        func makeCandidate(_ index: Int?) -> URL {
+            let suffix = index.map { "-\($0)" } ?? ""
+            let name = fileExtension.isEmpty ? "\(baseName)\(suffix)" : "\(baseName)\(suffix).\(fileExtension)"
+            return directory.appending(path: name)
+        }
+
+        var candidate = makeCandidate(nil)
+        var index = 1
+        while fileManager.fileExists(atPath: candidate.path) {
+            candidate = makeCandidate(index)
+            index += 1
+        }
+        return candidate
     }
 
     static func saveDataToDocuments(_ data: Data, filename: String, subdirectory: String) throws -> URL {
@@ -37,9 +76,6 @@ final class PersistenceService {
         }
 
         let destinationURL = try makeUniqueDocumentURL(filename: sourceURL.lastPathComponent, subdirectory: subdirectory)
-        if FileManager.default.fileExists(atPath: destinationURL.path) {
-            try FileManager.default.removeItem(at: destinationURL)
-        }
         try FileManager.default.copyItem(at: sourceURL, to: destinationURL)
         return destinationURL
     }

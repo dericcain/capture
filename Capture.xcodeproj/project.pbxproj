@@ -46,7 +46,7 @@
 /* Begin PBXFileReference section */
 		AA5A2A6957AF465B80A9329B /* CaptureApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CaptureApp.swift; sourceTree = "<group>"; };
 		24DC122700CA464FA29E8291 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
-		5575C0805D20447F8875D195 /* Date+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Date+Formatting.swift; sourceTree = "<group>"; };
+		5575C0805D20447F8875D195 /* Date+Formatting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Date+Formatting.swift"; sourceTree = "<group>"; };
 		E48A381420ED4F678A8C754E /* Attachment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Attachment.swift; sourceTree = "<group>"; };
 		A2F30CF634384A21A385CB05 /* Capture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Capture.swift; sourceTree = "<group>"; };
 		9EA952CC224E40BFA450BCA8 /* Enrichment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Enrichment.swift; sourceTree = "<group>"; };
@@ -165,6 +165,7 @@
 		}; name = Release; };
 		075103B5FFDE400CB0A75C75 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
 			CODE_SIGN_STYLE = Automatic;
+			CODE_SIGN_ENTITLEMENTS = "Capture/Capture.entitlements";
 			CURRENT_PROJECT_VERSION = 1;
 			DEVELOPMENT_TEAM = "";
 			GENERATE_INFOPLIST_FILE = YES;
@@ -185,6 +186,7 @@
 		}; name = Debug; };
 		C4DB767D9C0D44DD8250B17C /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
 			CODE_SIGN_STYLE = Automatic;
+			CODE_SIGN_ENTITLEMENTS = "Capture/Capture.entitlements";
 			CURRENT_PROJECT_VERSION = 1;
 			DEVELOPMENT_TEAM = "";
 			GENERATE_INFOPLIST_FILE = YES;
@@ -206,6 +208,7 @@
 		9A9EA4A5744744FB9DF7C1A4 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {
 			APPLICATION_EXTENSION_API_ONLY = YES;
 			CODE_SIGN_STYLE = Automatic;
+			CODE_SIGN_ENTITLEMENTS = "ShareExtension/ShareExtension.entitlements";
 			CURRENT_PROJECT_VERSION = 1;
 			DEVELOPMENT_TEAM = "";
 			GENERATE_INFOPLIST_FILE = NO;
@@ -223,6 +226,7 @@
 		2A9B57F8F4814D69B862C892 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {
 			APPLICATION_EXTENSION_API_ONLY = YES;
 			CODE_SIGN_STYLE = Automatic;
+			CODE_SIGN_ENTITLEMENTS = "ShareExtension/ShareExtension.entitlements";
 			CURRENT_PROJECT_VERSION = 1;
 			DEVELOPMENT_TEAM = "";
 			GENERATE_INFOPLIST_FILE = NO;

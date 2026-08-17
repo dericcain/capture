@@ -5,16 +5,18 @@ import UIKit
 struct CaptureDetailView: View {
     let capture: Capture
     @Environment(\.modelContext) private var modelContext
-    @Query private var allEnrichments: [Enrichment]
+    @Query private var enrichments: [Enrichment]
     @State private var correctedPeopleText = ""
     @State private var correctedAreasText = ""
 
     init(capture: Capture) {
         self.capture = capture
+        let captureID = capture.id
+        _enrichments = Query(filter: #Predicate<Enrichment> { $0.captureId == captureID })
     }
 
     private var enrichment: Enrichment? {
-        allEnrichments.first(where: { $0.captureId == capture.id })
+        enrichments.first
     }
 
     private var displayedPeople: [String] {
@@ -58,13 +60,13 @@ struct CaptureDetailView: View {
                 if !displayedPeople.isEmpty {
                     chipSection(title: "People", values: displayedPeople, tint: .purple)
                 }
-                if let enrichment, !enrichment.topics.isEmpty {
+                if !enrichment.topics.isEmpty {
                     chipSection(title: "Topics", values: enrichment.topics, tint: .green)
                 }
-                if let enrichment, !enrichment.tasks.isEmpty {
+                if !enrichment.tasks.isEmpty {
                     chipSection(title: "Tasks", values: enrichment.tasks, tint: .orange)
                 }
-                if let enrichment, !enrichment.dates.isEmpty {
+                if !enrichment.dates.isEmpty {
                     chipSection(title: "Dates", values: enrichment.dates, tint: .pink)
                 }
             }
@@ -141,13 +143,16 @@ struct CaptureDetailView: View {
 private struct FlowLayout: View {
     let values: [String]
     let tint: Color
+    private var rows: [[String]] {
+        chunked(values, size: 3)
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            ForEach(chunked(values, size: 3), id: \.self) { row in
+            ForEach(rows.indices, id: \.self) { rowIndex in
                 HStack {
-                    ForEach(row, id: \.self) { value in
-                        StatusChip(title: value, tint: tint)
+                    ForEach(rows[rowIndex].indices, id: \.self) { valueIndex in
+                        StatusChip(title: rows[rowIndex][valueIndex], tint: tint)
                     }
                     Spacer(minLength: 0)
                 }

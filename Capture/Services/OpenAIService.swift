@@ -21,7 +21,7 @@ actor OpenAIService {
     }
 
     var apiKey: String? {
-        let key = UserDefaults.standard.string(forKey: Self.apiKeyDefaultsKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
+        let key = PersistenceService.sharedUserDefaults.string(forKey: Self.apiKeyDefaultsKey)?.trimmingCharacters(in: .whitespacesAndNewlines)
         return key?.isEmpty == false ? key : nil
     }
 
@@ -42,7 +42,8 @@ actor OpenAIService {
 
         var body = Data()
         body.appendMultipartField(named: "model", value: "whisper-1", boundary: boundary)
-        body.appendMultipartFile(named: "file", fileURL: fileURL, mimeType: "audio/m4a", boundary: boundary)
+        let fileData = try Data(contentsOf: fileURL)
+        body.appendMultipartFile(named: "file", filename: fileURL.lastPathComponent, fileData: fileData, mimeType: "audio/m4a", boundary: boundary)
         body.appendString("--\(boundary)--\r\n")
         request.httpBody = body
 
@@ -151,11 +152,11 @@ private extension Data {
         appendString("\r\n")
     }
 
-    mutating func appendMultipartFile(named name: String, fileURL: URL, mimeType: String, boundary: String) {
+    mutating func appendMultipartFile(named name: String, filename: String, fileData: Data, mimeType: String, boundary: String) {
         appendString("--\(boundary)\r\n")
-        appendString("Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(fileURL.lastPathComponent)\"\r\n")
+        appendString("Content-Disposition: form-data; name=\"\(name)\"; filename=\"\(filename)\"\r\n")
         appendString("Content-Type: \(mimeType)\r\n\r\n")
-        append((try? Data(contentsOf: fileURL)) ?? Data())
+        append(fileData)
         appendString("\r\n")
     }
 }

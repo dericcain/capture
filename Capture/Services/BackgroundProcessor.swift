@@ -16,6 +16,25 @@ actor BackgroundProcessor {
         await process(captureID: captureID)
     }
 
+    func retryPendingCaptures() async {
+        guard await openAIService.hasAPIKey() else { return }
+
+        let context = ModelContext(container)
+        let predicate = #Predicate<Capture> { capture in
+            capture.enrichmentStatus.rawValue == "pending" || capture.transcriptionStatus.rawValue == "pending"
+        }
+        let descriptor = FetchDescriptor<Capture>(predicate: predicate)
+
+        do {
+            let pendingCaptures = try context.fetch(descriptor)
+            for capture in pendingCaptures {
+                await process(captureID: capture.id)
+            }
+        } catch {
+            return
+        }
+    }
+
     private func process(captureID: UUID) async {
         guard await openAIService.hasAPIKey() else { return }
 
@@ -87,11 +106,19 @@ actor BackgroundProcessor {
     }
 
     private func fetchCapture(id: UUID, in context: ModelContext) throws -> Capture? {
-        try context.fetch(FetchDescriptor<Capture>()).first(where: { $0.id == id })
+        let predicate = #Predicate<Capture> { capture in
+            capture.id == id
+        }
+        let descriptor = FetchDescriptor<Capture>(predicate: predicate)
+        return try context.fetch(descriptor).first
     }
 
     private func fetchEnrichment(captureID: UUID, in context: ModelContext) throws -> Enrichment? {
-        try context.fetch(FetchDescriptor<Enrichment>()).first(where: { $0.captureId == captureID })
+        let predicate = #Predicate<Enrichment> { enrichment in
+            enrichment.captureId == captureID
+        }
+        let descriptor = FetchDescriptor<Enrichment>(predicate: predicate)
+        return try context.fetch(descriptor).first
     }
 
     private func fallbackPromptContent(for capture: Capture) -> String {
